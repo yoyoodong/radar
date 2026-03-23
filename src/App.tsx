@@ -653,7 +653,7 @@ export default function App() {
                 <Radar className="text-white" size={24} />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white leading-tight">MagicFrame 舆情雷达站</h1>
+                <h1 className="text-lg font-bold text-white leading-tight">MagicFrame 产品洞察站</h1>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest">VOC Analysis Center • Supabase Powered</p>
               </div>
             </div>
@@ -668,7 +668,7 @@ export default function App() {
                 )}
               >
                 <LayoutGrid size={14} />
-                舆情雷达
+                收集
               </button>
               <button 
                 onClick={() => setActiveView('dashboard')}
@@ -678,7 +678,7 @@ export default function App() {
                 )}
               >
                 <BarChart3 size={14} />
-                洞察大盘
+                洞察
                 <span className="absolute -top-1 -right-1 flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
@@ -777,7 +777,7 @@ export default function App() {
                       <Search size={32} />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-lg font-medium text-white">当前雷达暂未扫到相关情报</h3>
+                      <h3 className="text-lg font-medium text-white">当前收集暂未扫到相关情报</h3>
                       <p className="text-sm text-zinc-500 max-w-xs mx-auto">尝试调整筛选条件，或查看下方的排版示例预览交互效果。</p>
                     </div>
                   </div>
@@ -922,7 +922,7 @@ export default function App() {
                   ) : (
                     <div className="h-[300px] flex flex-col items-center justify-center text-zinc-600 space-y-2">
                       <AlertCircle size={32} />
-                      <p className="text-xs">暂未积累足够的标签数据，请先前往雷达站进行标记</p>
+                      <p className="text-xs">暂未积累足够的标签数据，请先前往收集页进行标记</p>
                     </div>
                   )}
                 </div>
@@ -930,7 +930,7 @@ export default function App() {
                 <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 shadow-sm">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-6">
                     <TrendingUp size={16} className="text-blue-500" />
-                    全网情绪雷达
+                    全网情绪洞察
                   </h3>
                   <div className="space-y-6">
                     {sentimentData.map(s => (
