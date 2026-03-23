@@ -161,14 +161,17 @@ const SentimentSummary = ({ items }: { items: IntelligenceItem[] }) => {
 // --- Components ---
 
 const TagBadge = ({ label }: { label: string }) => {
-  const option = TAG_OPTIONS.find(o => o.label === label);
+  // Handle labels that might contain emojis or extra whitespace from AI scripts
+  const cleanLabel = label?.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\s/g, '').trim();
+  const option = TAG_OPTIONS.find(o => o.label === label || o.label === cleanLabel);
+  
   if (!option) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 uppercase tracking-wider">{label || '未标记'}</span>;
   
   const Icon = option.icon;
   return (
     <span className={cn("inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border font-medium", option.bg, option.color, option.border)}>
       <Icon size={10} />
-      {label}
+      {option.label}
     </span>
   );
 };
@@ -582,7 +585,10 @@ export default function App() {
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       const platformMatch = platformFilter === '全部' || item.platform === platformFilter;
-      const tagMatch = tagFilter === '全部' || item.status === tagFilter;
+      // Robust matching for tags that might include emojis or extra spaces
+      const tagMatch = tagFilter === '全部' || 
+                       item.status === tagFilter || 
+                       (item.status && tagFilter !== '全部' && tagFilter !== '未标记' && item.status.includes(tagFilter));
       return platformMatch && tagMatch;
     });
   }, [items, platformFilter, tagFilter]);
@@ -739,6 +745,12 @@ export default function App() {
             <div className="h-8 w-px bg-zinc-800" />
 
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg">
+                <div className={cn("w-2 h-2 rounded-full animate-pulse", isConfigured ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]")} />
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                  {isConfigured ? '已连接云端' : '离线模式'}
+                </span>
+              </div>
               <div className="text-right">
                 <div className="text-xs font-bold text-white">{activeView === 'radar' ? filteredItems.length : items.length}</div>
                 <div className="text-[10px] text-zinc-500 uppercase">情报总数</div>
