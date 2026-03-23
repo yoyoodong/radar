@@ -53,7 +53,7 @@ interface IntelligenceItem {
   content: string;
   author: string;
   created_at: string;
-  status: string;
+  tag: string;
   sentiment: '正面' | '负面' | '中性';
   source_url?: string;
   keyword?: string;
@@ -74,25 +74,19 @@ const TAG_FILTERS = ['全部', '未标记', ...TAG_OPTIONS.map(t => t.label)];
 
 // --- Mock Data Seeding (Aligned with SQL Schema) ---
 const SEED_DATA = [
-  { id: 1, platform: '小红书', author: 'AI画框迷', content: '最近入手的这款 AI 画框真的惊艳，能根据心情自动变换画作风格，就是偶尔生成的画有点抽象。', status: '核心褒奖', sentiment: '正面', keyword: 'AI画框', source_url: 'https://www.xiaohongshu.com/explore/1', created_at: new Date().toISOString() },
-  { id: 2, platform: '抖音', author: '智能家居控', content: '智能日历如果能和手机日程实时同步就完美了，现在的同步速度有点慢，经常错过会议。', status: '竞品痛点', sentiment: '负面', keyword: '智能日历', source_url: 'https://www.douyin.com/video/1', created_at: new Date().toISOString() },
-  { id: 3, platform: '小红书', author: '极简生活', content: '电子相册的边框如果能再窄一点就好了，现在的黑边看着有点厚重，不够精致。', status: '新功能许愿', sentiment: '中性', keyword: '电子相册', source_url: 'https://www.xiaohongshu.com/explore/2', created_at: new Date().toISOString() },
-  { id: 4, platform: '抖音', author: '数码测评师', content: '这款电子画框的显示效果确实不错，色彩还原度很高，就是 3000 块的价格确实有点贵。', status: '定价敏感', sentiment: '中性', keyword: '电子画框', source_url: 'https://www.douyin.com/video/2', created_at: new Date().toISOString() },
-  { id: 5, platform: '小红书', author: '艺术爱好者', content: '智能画框的木质外壳质感很好，放在客厅非常有格调，朋友来家里都问链接。', status: '外观好评', sentiment: '正面', keyword: '智能画框', source_url: 'https://www.xiaohongshu.com/explore/3', created_at: new Date().toISOString() },
-  { id: 6, platform: '抖音', author: '路人甲', content: '有人用过这种智能日历吗？感觉挺新颖的，不知道实用性强不强。', status: '未标记', sentiment: '中性', keyword: '智能日历', source_url: 'https://www.douyin.com/video/3', created_at: new Date().toISOString() },
+  { id: 1, platform: '小红书', author: 'AI画框迷', content: '最近入手的这款 AI 画框真的惊艳，能根据心情自动变换画作风格，就是偶尔生成的画有点抽象。', tag: '核心褒奖', sentiment: '正面', keyword: 'AI画框', source_url: 'https://www.xiaohongshu.com/explore/1', created_at: new Date().toISOString() },
+  { id: 2, platform: '抖音', author: '智能家居控', content: '智能日历如果能和手机日程实时同步就完美了，现在的同步速度有点慢，经常错过会议。', tag: '竞品痛点', sentiment: '负面', keyword: '智能日历', source_url: 'https://www.douyin.com/video/1', created_at: new Date().toISOString() },
+  { id: 3, platform: '小红书', author: '极简生活', content: '电子相册的边框如果能再窄一点就好了，现在的黑边看着有点厚重，不够精致。', tag: '新功能许愿', sentiment: '中性', keyword: '电子相册', source_url: 'https://www.xiaohongshu.com/explore/2', created_at: new Date().toISOString() },
+  { id: 4, platform: '抖音', author: '数码测评师', content: '这款电子画框的显示效果确实不错，色彩还原度很高，就是 3000 块的价格确实有点贵。', tag: '定价敏感', sentiment: '中性', keyword: '电子画框', source_url: 'https://www.douyin.com/video/2', created_at: new Date().toISOString() },
+  { id: 5, platform: '小红书', author: '艺术爱好者', content: '智能画框的木质外壳质感很好，放在客厅非常有格调，朋友来家里都问链接。', tag: '外观好评', sentiment: '正面', keyword: '智能画框', source_url: 'https://www.xiaohongshu.com/explore/3', created_at: new Date().toISOString() },
+  { id: 6, platform: '抖音', author: '路人甲', content: '有人用过这种智能日历吗？感觉挺新颖的，不知道实用性强不强。', tag: '未标记', sentiment: '中性', keyword: '智能日历', source_url: 'https://www.douyin.com/video/3', created_at: new Date().toISOString() },
 ];
 
-const SentimentSummary = ({ items }: { items: IntelligenceItem[] }) => {
-  const data = useMemo(() => {
-    const counts = {
-      '正面': 0,
-      '负面': 0,
-      '中性': 0
-    };
+const RadarSummary = ({ items }: { items: IntelligenceItem[] }) => {
+  const sentimentData = useMemo(() => {
+    const counts = { '正面': 0, '负面': 0, '中性': 0 };
     items.forEach(item => {
-      if (counts[item.sentiment] !== undefined) {
-        counts[item.sentiment]++;
-      }
+      if (counts[item.sentiment] !== undefined) counts[item.sentiment]++;
     });
     return [
       { name: '正面', value: counts['正面'], color: '#10b981' },
@@ -101,54 +95,89 @@ const SentimentSummary = ({ items }: { items: IntelligenceItem[] }) => {
     ].filter(d => d.value > 0);
   }, [items]);
 
+  const keywordData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    items.forEach(item => {
+      if (item.keyword) counts[item.keyword] = (counts[item.keyword] || 0) + 1;
+    });
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+    return Object.entries(counts).map(([name, value], index) => ({
+      name,
+      value,
+      color: colors[index % colors.length]
+    })).sort((a, b) => b.value - a.value).slice(0, 6);
+  }, [items]);
+
   if (items.length === 0) return null;
 
   return (
-    <div className="mb-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      {/* Sentiment Summary */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-8 shadow-sm"
+        className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm"
       >
-        <div className="w-full h-[200px] md:w-1/2">
+        <div className="w-full h-[160px] sm:w-1/3">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {data.map((entry, index) => (
+              <Pie data={sentimentData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
+                {sentimentData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                 ))}
               </Pie>
-              <RechartsTooltip 
-                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }}
-                itemStyle={{ color: '#e4e4e7' }}
-              />
+              <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }} itemStyle={{ color: '#e4e4e7' }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="w-full md:w-1/2 space-y-4">
-          <div className="flex items-center gap-2 text-zinc-400 mb-2">
+        <div className="w-full sm:w-2/3 space-y-4">
+          <div className="flex items-center gap-2 text-zinc-400">
             <TrendingUp size={16} className="text-blue-500" />
             <span className="text-xs font-bold uppercase tracking-widest">情感分布概览</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {data.map(d => (
-              <div key={d.name} className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-zinc-800/50">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
-                  <span className="text-sm text-zinc-300 font-medium">{d.name}</span>
+          <div className="grid grid-cols-3 gap-2">
+            {sentimentData.map(d => (
+              <div key={d.name} className="flex flex-col p-2 rounded-xl bg-black/40 border border-zinc-800/50">
+                <span className="text-[10px] text-zinc-500 uppercase font-bold">{d.name}</span>
+                <span className="text-lg font-bold text-white">{d.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Keyword Summary */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm"
+      >
+        <div className="w-full h-[160px] sm:w-1/3">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={keywordData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
+                {keywordData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                ))}
+              </Pie>
+              <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }} itemStyle={{ color: '#e4e4e7' }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="w-full sm:w-2/3 space-y-4">
+          <div className="flex items-center gap-2 text-zinc-400">
+            <PieChartIcon size={16} className="text-emerald-500" />
+            <span className="text-xs font-bold uppercase tracking-widest">产品分类占比</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {keywordData.slice(0, 4).map(d => (
+              <div key={d.name} className="flex items-center justify-between p-2 rounded-xl bg-black/40 border border-zinc-800/50 overflow-hidden">
+                <div className="flex items-center gap-2 truncate">
+                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                  <span className="text-[10px] text-zinc-300 font-medium truncate">{d.name}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-white">{d.value}</span>
-                  <span className="text-[10px] text-zinc-500 uppercase">条</span>
-                </div>
+                <span className="text-xs font-bold text-white ml-1">{d.value}</span>
               </div>
             ))}
           </div>
@@ -161,9 +190,7 @@ const SentimentSummary = ({ items }: { items: IntelligenceItem[] }) => {
 // --- Components ---
 
 const TagBadge = ({ label }: { label: string }) => {
-  // Handle labels that might contain emojis or extra whitespace from AI scripts
-  const cleanLabel = label?.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\s/g, '').trim();
-  const option = TAG_OPTIONS.find(o => o.label === label || o.label === cleanLabel);
+  const option = TAG_OPTIONS.find(o => o.label === label);
   
   if (!option) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 uppercase tracking-wider">{label || '未标记'}</span>;
   
@@ -246,7 +273,7 @@ const IntelligenceCard: React.FC<{
             <div>
               <div className="text-sm font-medium text-zinc-200 flex items-center gap-2">
                 {item.author}
-                <TagBadge label={item.status} />
+                <TagBadge label={item.tag} />
                 <span className={cn("text-[9px] px-1.5 py-0.5 rounded border font-bold", sentimentColor)}>
                   {item.sentiment}
                 </span>
@@ -303,7 +330,7 @@ const IntelligenceCard: React.FC<{
 };
 
 const TaggingModal = ({ item, onClose, onSave }: { item: IntelligenceItem, onClose: () => void, onSave: (tag: string) => void }) => {
-  const [selectedTag, setSelectedTag] = useState(item.status);
+  const [selectedTag, setSelectedTag] = useState(item.tag);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSave = async () => {
@@ -556,7 +583,7 @@ export default function App() {
     if (!isConfigured) {
       // Local update for mock mode
       setItems(prev => prev.map(item => 
-        item.id === taggingItem.id ? { ...item, status: tag } : item
+        item.id === taggingItem.id ? { ...item, tag: tag } : item
       ));
       setTaggingItem(null);
       setToast({ message: '标签标记成功 (本地)', type: 'success' });
@@ -566,7 +593,7 @@ export default function App() {
     try {
       const { error } = await supabase
         .from('crawler_intelligence')
-        .update({ status: tag })
+        .update({ tag: tag })
         .eq('id', taggingItem.id);
 
       if (error) throw error;
@@ -585,10 +612,7 @@ export default function App() {
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       const platformMatch = platformFilter === '全部' || item.platform === platformFilter;
-      // Robust matching for tags that might include emojis or extra spaces
-      const tagMatch = tagFilter === '全部' || 
-                       item.status === tagFilter || 
-                       (item.status && tagFilter !== '全部' && tagFilter !== '未标记' && item.status.includes(tagFilter));
+      const tagMatch = tagFilter === '全部' || item.tag === tagFilter;
       return platformMatch && tagMatch;
     });
   }, [items, platformFilter, tagFilter]);
@@ -596,7 +620,7 @@ export default function App() {
   // Dashboard Stats
   const dashboardStats = useMemo(() => {
     const total = items.length;
-    const validInsights = items.filter(i => i.status !== '未标记').length;
+    const validInsights = items.filter(i => i.tag !== '未标记').length;
     const positiveCount = items.filter(i => i.sentiment === '正面').length;
     const healthRate = total > 0 ? Math.round((positiveCount / total) * 100) : 0;
     
@@ -606,9 +630,25 @@ export default function App() {
   const dashboardChartData = useMemo(() => {
     return TAG_OPTIONS.map(tag => ({
       name: tag.label,
-      value: items.filter(i => i.status === tag.label).length,
+      value: items.filter(i => i.tag === tag.label).length,
       color: tag.hex
     })).filter(d => d.value > 0);
+  }, [items]);
+
+  const keywordChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    items.forEach(item => {
+      if (item.keyword) {
+        counts[item.keyword] = (counts[item.keyword] || 0) + 1;
+      }
+    });
+    
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+    return Object.entries(counts).map(([name, value], index) => ({
+      name,
+      value,
+      color: colors[index % colors.length]
+    })).sort((a, b) => b.value - a.value);
   }, [items]);
 
   const sentimentData = useMemo(() => {
@@ -621,9 +661,9 @@ export default function App() {
   }, [items]);
 
   const dashboardInsights = useMemo(() => {
-    let base = items.filter(i => i.status !== '未标记');
+    let base = items.filter(i => i.tag !== '未标记');
     if (dashboardFilter) {
-      base = base.filter(i => i.status === dashboardFilter);
+      base = base.filter(i => i.tag === dashboardFilter);
     }
     return base.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 10);
   }, [items, dashboardFilter]);
@@ -771,8 +811,8 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeView === 'radar' ? (
           <>
-            {/* Sentiment Summary */}
-            <SentimentSummary items={(items.length > 0 || !hasFetched) ? items : (SEED_DATA as any)} />
+            {/* Radar Summary (Sentiment + Keyword) */}
+            <RadarSummary items={(items.length > 0 || !hasFetched) ? items : (SEED_DATA as any)} />
 
             <div className="space-y-8">
               {(!hasFetched || loading || isSeeding) ? (
@@ -967,6 +1007,59 @@ export default function App() {
                 </div>
 
                 <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 shadow-sm">
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <PieChartIcon size={16} className="text-emerald-500" />
+                      产品分类占比
+                    </h3>
+                  </div>
+                  
+                  {keywordChartData.length > 0 ? (
+                    <div className="flex flex-col md:flex-row items-center gap-8">
+                      <div className="w-full h-[300px] md:w-1/2">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={keywordChartData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={70}
+                              outerRadius={100}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {keywordChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                              ))}
+                            </Pie>
+                            <RechartsTooltip 
+                              contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }}
+                              itemStyle={{ color: '#e4e4e7' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="w-full md:w-1/2 grid grid-cols-2 gap-3">
+                        {keywordChartData.map(d => (
+                          <div key={d.name} className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-zinc-800/50">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                              <span className="text-[10px] font-medium text-zinc-400 truncate">{d.name}</span>
+                            </div>
+                            <span className="text-xs font-bold text-white ml-2">{d.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-[300px] flex flex-col items-center justify-center text-zinc-600 space-y-2">
+                      <AlertCircle size={32} />
+                      <p className="text-xs">暂无产品分类数据</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 shadow-sm">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-6">
                     <TrendingUp size={16} className="text-blue-500" />
                     全网情绪洞察
@@ -1015,7 +1108,7 @@ export default function App() {
                         className="bg-black/40 border border-zinc-800 rounded-xl p-4 space-y-3 hover:border-zinc-700 transition-colors"
                       >
                         <div className="flex items-center justify-between">
-                          <TagBadge label={item.status} />
+                          <TagBadge label={item.tag} />
                           <span className="text-[10px] text-zinc-500">{item.platform}</span>
                         </div>
                         <p className="text-xs text-zinc-300 leading-relaxed line-clamp-3">
