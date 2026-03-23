@@ -1,0 +1,68 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: crawler_intelligence
+// Document ID: {itemId}
+// Fields:
+//   - platform: string (required, enum: ["小红书", "抖音"])
+//   - content: string (required, min: 1, max: 5000)
+//   - nickname: string (required, min: 1, max: 100)
+//   - timestamp: timestamp (required)
+//   - tag: string (required, enum: ["未标记", "竞品痛点", "新功能许愿", "外观好评", "定价敏感", "核心褒奖"])
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "gretadong666@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidIntelligenceItem(data) {
+      return hasRequiredFields(['platform', 'content', 'nickname', 'timestamp', 'tag']) &&
+             hasOnlyAllowedFields(['platform', 'content', 'nickname', 'timestamp', 'tag']) &&
+             data.platform in ['小红书', '抖音'] &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 5000 &&
+             data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 100 &&
+             data.timestamp is timestamp &&
+             data.tag in ['未标记', '竞品痛点', '新功能许愿', '外观好评', '定价敏感', '核心褒奖'];
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    match /crawler_intelligence/{itemId} {
+      // Allow read for all authenticated users (PMs/Ops)
+      allow read: if isAuthenticated();
+      
+      // Allow create/update for authenticated users (with validation)
+      allow create: if isAuthenticated() && isValidIntelligenceItem(request.resource.data);
+      
+      // Allow update for authenticated users (with validation)
+      allow update: if isAuthenticated() && isValidIntelligenceItem(request.resource.data);
+      
+      // Allow delete only for admins
+      allow delete: if isAdmin();
+    }
+  }
+}

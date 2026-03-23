@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "IntelligenceItem": {
+      "title": "IntelligenceItem",
+      "description": "A piece of public opinion intelligence from social platforms.",
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": ["小红书", "抖音"],
+          "description": "The platform where the intelligence was found."
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the intelligence."
+        },
+        "nickname": {
+          "type": "string",
+          "description": "The nickname of the user who posted it."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the intelligence was posted."
+        },
+        "tag": {
+          "type": "string",
+          "enum": ["未标记", "竞品痛点", "新功能许愿", "外观好评", "定价敏感", "核心褒奖"],
+          "description": "The analysis tag assigned to this item."
+        }
+      },
+      "required": ["platform", "content", "nickname", "timestamp", "tag"]
+    }
+  },
+  "firestore": {
+    "/crawler_intelligence/{itemId}": {
+      "schema": "IntelligenceItem",
+      "description": "Collection of crawled intelligence items."
+    }
+  }
+}

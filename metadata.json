@@ -1,0 +1,5 @@
+{
+  "name": "MagicFrame 舆情雷达站",
+  "description": "全网舆情 VOC 分析大屏，支持海量数据筛选与结构化标签提纯。",
+  "requestFramePermissions": []
+}
