@@ -20,7 +20,9 @@ import {
   LayoutGrid,
   BarChart3,
   PieChart as PieChartIcon,
-  TrendingUp
+  TrendingUp,
+  ShoppingBag,
+  Trash2
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -58,11 +60,13 @@ interface IntelligenceItem {
 }
 
 const TAG_OPTIONS = [
-  { label: '竞品痛点', icon: Filter, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
-  { label: '新功能许愿', icon: Lightbulb, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-  { label: '外观好评', icon: Sparkles, color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-  { label: '定价敏感', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
-  { label: '核心褒奖', icon: Trophy, color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
+  { label: '竞品痛点', icon: Filter, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20', hex: '#f97316' },
+  { label: '新功能许愿', icon: Lightbulb, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', hex: '#3b82f6' },
+  { label: '外观好评', icon: Sparkles, color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20', hex: '#a855f7' },
+  { label: '定价敏感', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20', hex: '#22c55e' },
+  { label: '核心褒奖', icon: Trophy, color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', hex: '#eab308' },
+  { label: '购买咨询', icon: ShoppingBag, color: 'text-pink-500', bg: 'bg-pink-500/10', border: 'border-pink-500/20', hex: '#ec4899' },
+  { label: '无效数据', icon: Trash2, color: 'text-zinc-500', bg: 'bg-zinc-500/10', border: 'border-zinc-500/20', hex: '#71717a' },
 ];
 
 const PLATFORMS = ['全部', '小红书', '抖音', 'B站'];
@@ -597,7 +601,7 @@ export default function App() {
     return TAG_OPTIONS.map(tag => ({
       name: tag.label,
       value: items.filter(i => i.status === tag.label).length,
-      color: tag.color.replace('text-', '#').replace('500', '500') // Simplified color mapping
+      color: tag.hex
     })).filter(d => d.value > 0);
   }, [items]);
 
