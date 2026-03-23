@@ -445,6 +445,8 @@ export default function App() {
 
   const [items, setItems] = useState<IntelligenceItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [platformFilter, setPlatformFilter] = useState('全部');
   const [tagFilter, setTagFilter] = useState('全部');
   const [taggingItem, setTaggingItem] = useState<IntelligenceItem | null>(null);
@@ -489,15 +491,20 @@ export default function App() {
       if (data && data.length > 0) {
         setItems(data);
       } else if (isInitial) {
+        setIsSeeding(true);
         await seedInitialData();
+        setIsSeeding(false);
       }
+      setHasFetched(true);
     } catch (error) {
       console.error('Fetch error:', error);
-      if (items.length === 0) {
+      // Only fallback to seed data if we are NOT configured
+      if (!isConfigured && items.length === 0) {
         setItems(SEED_DATA as any);
       }
+      setHasFetched(true);
     } finally {
-      setLoading(false);
+      if (!isSeeding) setLoading(false);
     }
   };
 
@@ -749,10 +756,10 @@ export default function App() {
         {activeView === 'radar' ? (
           <>
             {/* Sentiment Summary */}
-            <SentimentSummary items={items.length > 0 ? items : (SEED_DATA as any)} />
+            <SentimentSummary items={(items.length > 0 || !hasFetched) ? items : (SEED_DATA as any)} />
 
             <div className="space-y-8">
-              {loading ? (
+              {(!hasFetched || loading || isSeeding) ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[1, 2, 3, 4, 5, 6].map(i => <SkeletonCard key={i} />)}
                 </div>
@@ -782,36 +789,52 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Layout Preview / Example Data */}
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-4">
-                      <div className="h-px flex-1 bg-zinc-800" />
-                      <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <Sparkles size={12} />
-                        排版示例预览
+                  {/* Layout Preview / Example Data - Only show if NOT configured */}
+                  {!isConfigured && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-4">
+                        <div className="h-px flex-1 bg-zinc-800" />
+                        <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                          <Sparkles size={12} />
+                          排版示例预览
+                        </div>
+                        <div className="h-px flex-1 bg-zinc-800" />
                       </div>
-                      <div className="h-px flex-1 bg-zinc-800" />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60 hover:opacity-100 transition-opacity duration-500">
+                        {SEED_DATA.slice(0, 3).map((item, idx) => (
+                          <IntelligenceCard 
+                            key={`example-${idx}`} 
+                            item={{ ...item, id: `example-${idx}`, created_at: new Date().toISOString() } as any} 
+                            onTagClick={setTaggingItem}
+                            isExample={true}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60 hover:opacity-100 transition-opacity duration-500">
-                      {SEED_DATA.slice(0, 3).map((item, idx) => (
-                        <IntelligenceCard 
-                          key={`example-${idx}`} 
-                          item={{ ...item, id: `example-${idx}`, created_at: new Date().toISOString() } as any} 
-                          onTagClick={setTaggingItem}
-                          isExample={true}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
           </>
         ) : (
           <div className="space-y-8">
-            {/* Module A: KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {(!hasFetched || loading || isSeeding) ? (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-32 bg-zinc-900/50 border border-zinc-800 rounded-2xl animate-pulse" />
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2 h-[600px] bg-zinc-900/50 border border-zinc-800 rounded-2xl animate-pulse" />
+                  <div className="h-[600px] bg-zinc-900/50 border border-zinc-800 rounded-2xl animate-pulse" />
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Module A: KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -997,9 +1020,11 @@ export default function App() {
                 </div>
               </div>
             </div>
-          </div>
+          </>
         )}
-      </main>
+      </div>
+    )}
+  </main>
 
       {/* Modals & Toasts */}
       <AnimatePresence>
